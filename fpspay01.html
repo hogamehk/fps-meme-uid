@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>付款確認 | 官方授權點卡儲值</title>
+    <style>
+        :root { --brand-color: #ff9800; --brand-dark: #e68a00; }
+        body { font-family: "PingFang HK", sans-serif; line-height: 1.6; color: #333; background-color: #f7f7f7; padding: 15px; margin: 0; }
+        .card { max-width: 450px; margin: 10px auto; background: white; padding: 25px; border-radius: 24px; box-shadow: 0 10px 30px rgba(255,152,0,0.1); border-top: 8px solid var(--brand-color); }
+        h2 { color: var(--brand-color); text-align: center; font-size: 22px; margin-bottom: 20px; }
+        
+        .legal-notice { background: #fff9f0; border: 1px solid #ffe8cc; padding: 18px; border-radius: 15px; margin-bottom: 20px; font-size: 14px; color: #5d4037; }
+        .legal-notice strong { color: #d35400; display: block; margin-bottom: 8px; font-size: 16px; }
+        
+        .fps-area { display: none; background: #fff; border: 2px solid var(--brand-color); padding: 20px; border-radius: 18px; margin-top: 20px; animation: slideUp 0.4s ease; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .data-row { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #f0f0f0; }
+        .data-row:last-of-type { border-bottom: none; }
+        .label { color: #888; font-size: 13px; }
+        .value { font-weight: bold; color: #222; font-size: 17px; }
+        
+        .copy-btn { background: var(--brand-color); color: white; border: none; padding: 8px 16px; border-radius: 50px; font-size: 12px; cursor: pointer; font-weight: bold; }
+        
+        .agree-section { margin: 25px 0; padding: 15px; background: #fafafa; border-radius: 12px; }
+        #agreeCheck { transform: scale(1.4); margin-right: 12px; accent-color: var(--brand-color); cursor: pointer; }
+        .agree-label { font-size: 15px; color: #444; cursor: pointer; font-weight: 500; }
+        .mandatory-agree { margin: 18px 0 12px; padding: 12px; background: #fff7ed; border: 1px solid #ffd8a8; border-radius: 12px; }
+        .mandatory-agree label { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; color: #5d4037; line-height: 1.6; cursor: pointer; }
+        .mandatory-agree input[type="checkbox"] { transform: scale(1.15); margin-top: 3px; accent-color: var(--brand-color); cursor: pointer; }
+        .mandatory-agree a { color: #c26a00; font-weight: 700; text-decoration: none; }
+        .mandatory-agree a:hover { text-decoration: underline; }
+        .didit-note { margin-top: 10px; padding: 12px; border-radius: 10px; background: #fff; border: 1px solid #ffe0b2; color: #5d4037; font-size: 13px; line-height: 1.65; }
+        .didit-note strong { color: #8a4b00; }
+        
+        .primary-btn { width: 100%; background: var(--brand-color); color: white; border: none; padding: 18px; border-radius: 50px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 15px rgba(255,152,0,0.3); }
+        .primary-btn:disabled { background: #ddd; box-shadow: none; cursor: not-allowed; color: #999; }
+        
+        .wa-btn { display: none; text-align: center; background: #25D366; color: white; text-decoration: none; padding: 16px; border-radius: 50px; margin-top: 20px; font-weight: bold; font-size: 17px; box-shadow: 0 4px 12px rgba(37,211,102,0.3); }
+        .wa-btn.disabled { opacity: 0.5; pointer-events: none; }
+        .hint { font-size: 12px; color: #bbb; text-align: center; margin-top: 20px; }
+
+        .otp-card { max-width: 450px; margin: 10px auto; background: white; padding: 25px; border-radius: 24px; box-shadow: 0 10px 30px rgba(255,152,0,0.1); border-top: 8px solid var(--brand-color); }
+        .otp-title { color: var(--brand-color); text-align: center; font-size: 22px; margin-bottom: 8px; }
+        .otp-subtitle { text-align: center; color: #666; font-size: 14px; margin: 0 0 20px; }
+        .field-label { display: block; font-size: 13px; color: #666; margin-bottom: 6px; }
+        .field-input { width: 100%; box-sizing: border-box; border: 1px solid #ddd; border-radius: 12px; padding: 12px 14px; font-size: 16px; outline: none; margin-bottom: 14px; }
+        .field-input:focus { border-color: var(--brand-color); box-shadow: 0 0 0 3px rgba(255,152,0,0.15); }
+        .otp-row { display: flex; gap: 10px; margin-bottom: 14px; }
+        .otp-row .field-input { margin-bottom: 0; }
+        .secondary-btn { background: #fff3e0; border: 1px solid #ffd699; color: #a86200; border-radius: 12px; padding: 0 14px; font-weight: bold; cursor: pointer; white-space: nowrap; }
+        .secondary-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .otp-error { display: none; color: #c62828; font-size: 13px; margin: 6px 0 10px; }
+        .otp-success { display: none; color: #2e7d32; font-size: 13px; margin: 6px 0 10px; }
+        .app-content { display: block; }
+    </style>
+</head>
+<body>
+
+<div id="otpGate" class="otp-card" style="display:none;">
+    <h2 class="otp-title">手機驗證</h2>
+    <p class="otp-subtitle">請先完成手機號碼與驗證碼確認，才可查看付款資料</p>
+
+    <label class="field-label" for="phoneInput">手機號碼</label>
+    <input id="phoneInput" class="field-input" type="tel" inputmode="numeric" placeholder="例如：85291234567">
+
+    <label class="field-label" for="otpInput">驗證碼（4-6位數字）</label>
+    <div class="otp-row">
+        <input id="otpInput" class="field-input" type="text" inputmode="numeric" maxlength="6" placeholder="輸入驗證碼">
+        <button id="sendOtpBtn" type="button" class="secondary-btn">獲取驗證碼</button>
+    </div>
+
+    <div id="otpError" class="otp-error"></div>
+    <div id="otpSuccess" class="otp-success"></div>
+
+    <p style="font-size:12px; color:#777; margin:0 0 12px; text-align:center;">
+        如未設定後端，可先點
+        <a href="#" id="configApiLink" style="color:#e68a00; font-weight:bold;">設定驗證服務網址</a>
+        ｜
+        <a href="#" id="resetSettingsLink" style="color:#c62828; font-weight:bold;">取消本頁設定</a>
+    </p>
+
+    <button id="verifyOtpBtn" type="button" class="primary-btn">確認驗證並進入付款頁</button>
+</div>
+
+<div id="appContent" class="app-content">
+
+<div class="card">
+    <h2>FPS 安全支付結算</h2>
+<div class="legal-notice" style="line-height: 1.6; border: 1px solid #ddd; padding: 15px; border-radius: 8px;">
+    <strong style="font-size: 1.1em; color: #333;">📜 購買須知｜Important Notice</strong><br><br>
+
+    <strong style="color: #d9534f;">✅ 官方正貨｜Official Source</strong><br>
+    全經由正規管道進貨，保證即時到帳，帳號長期安全。<br>
+    <small style="color: #777;">100% official codes. Safe and reliable.</small><br><br>
+
+    <strong>🚫 不設退換｜No Refund</strong><br>
+    虛擬產品具即時性及不可逆轉性，<strong>一旦發貨，不論任何理由均不設退換。</strong><br>
+    <small style="color: #777;">Digital goods are non-refundable once issued for any reason.</small><br><br>
+    <strong style="color: #d9534f;">⚠️ 嚴防詐騙｜Fraud Alert</strong><br>
+
+    <b>切勿代他人或陌生人購買！</b>若涉及「網上交友」、「浪漫陷阱」或「見面保證金」，「買點卡解凍帳戶資金」請立即停止下單。本店恕不承擔任何詐騙損失。<br>
+    <small style="color: #d9534f;"><b>DO NOT</b> buy for strangers! Stop immediately if asked for "Dating/Romance Scams", "Meeting Deposits", or "Account Unblocking". We are NOT liable for any scam losses.
+</small>
+</div>
+
+
+
+<!-- 結賬資訊區塊 -->
+<div class="checkout-info" style="background:#fffbe7; border:1px solid #ffe082; border-radius:15px; padding:18px; margin-bottom:22px;">
+    <div id="mainProductTitle" style="font-size:16px; color:#333; font-weight:bold; margin-bottom:6px;"></div>
+    <div style="font-size:17px; color:#ff9800; font-weight:bold; margin-bottom:10px;">🛒 結賬資訊 &  請截圖保存此訂單詳情</div>
+    <div id="checkoutProductsList"></div>
+    <div class="data-row" style="border-top:2px solid #ffe082; font-weight:bold;">
+        <span class="label">總金額</span>
+        <span class="value" id="checkoutTotal">HK$0</span>
+    </div>
+</div>
+
+
+    <div class="agree-section">
+        <label class="agree-label">
+            <input type="checkbox" id="agreeCheck"> 我已確認並同意上述交易聲明
+        </label>
+    </div>
+
+    <div class="mandatory-agree">
+        <label for="termsForceCheck">
+            <input type="checkbox" id="termsForceCheck">
+            <span>我已閱讀並同意 <a href="/sales-terms.html" target="_blank" rel="noopener noreferrer">銷售條款</a> 與 <a href="/privacy.html" target="_blank" rel="noopener noreferrer">隱私政策</a>，並理解單筆或當日累計交易滿 HK$10,000 須配合 Didit 身份核驗，否則取消交易將扣除 0.75% + HK$2.00 手續費。</span>
+        </label>
+        <div class="didit-note">
+            <strong>💡 為什麼需要 Didit 驗證？</strong><br>
+            Didit 是一家<strong>國際合規的第三方數碼身份驗證平台</strong>，專門為全球電商提供銀行級別的反洗錢（AML）與客戶身份審查（KYC）。uiduid.com 透過 Didit 進行加密比對，本站全程<strong>「零儲存」</strong>您的證件個資，安全且符合私隱條例，請安心完成驗證。
+        </div>
+    </div>
+
+    <button id="showPayBtn" class="primary-btn" disabled>前往付款</button>
+
+    <div id="fpsSection" class="fps-area">
+        <div class="data-row">
+            <div><span class="label">FPS ID</span><br><span class="value" id="fpsPhone">2287134</span></div>
+            <button class="copy-btn" onclick="copyText('fpsPhone', 'ID')">複製</button>
+        </div>
+        <div class="data-row">
+            <div><span class="label">收款名稱</span><br><span class="value">HOGAME ONLINE ENTERTAINMENT LIMITED</span></div>
+        </div>
+        
+        <p style="font-size: 13px; color: #ff9800; text-align:center; font-weight:bold; margin-top: 15px;">👉 轉帳後請點擊下方按鈕上傳截圖 👈</p>
+        
+        <!-- 請將下方的 85291234567 替換為你的 WhatsApp 號碼 -->
+        <a href="https://wa.me/85255360181?text=我已完成 FPS 轉帳，以下是截圖：" class="wa-btn" id="waBtn">提交線下訂單</a>
+    </div>
+
+    <div class="hint">確認付款即視為雙方電子契約成立，受《電子交易條例》及相關商務法律監管。
+        <br>如有惡意詐騙或非法資金行為，本店將保留追究法律責任之權利。
+    </div>
+</div>
+</div>
+
+<script>
+    const queryApiBase = new URLSearchParams(window.location.search).get('api') || '';
+    function safeGetStorage(key) {
+        try {
+            return localStorage.getItem(key) || '';
+        } catch (error) {
+            return '';
+        }
+    }
+
+    function safeSetStorage(key, value) {
+        try {
+            localStorage.setItem(key, value);
+        } catch (error) {
+            // Ignore storage errors in restricted browsers/privacy mode.
+        }
+    }
+
+    function safeGetSession(key) {
+        try {
+            return sessionStorage.getItem(key) || '';
+        } catch (error) {
+            return '';
+        }
+    }
+
+    function safeSetSession(key, value) {
+        try {
+            sessionStorage.setItem(key, value);
+        } catch (error) {
+            // Ignore storage errors in restricted browsers/privacy mode.
+        }
+    }
+
+    function safeRemoveStorage(key) {
+        try {
+            localStorage.removeItem(key);
+        } catch (error) {
+            // Ignore storage errors in restricted browsers/privacy mode.
+        }
+    }
+
+    function safeRemoveSession(key) {
+        try {
+            sessionStorage.removeItem(key);
+        } catch (error) {
+            // Ignore storage errors in restricted browsers/privacy mode.
+        }
+    }
+
+    const savedApiBase = safeGetStorage('otp_api_base');
+    const OTP_API_BASE = (window.OTP_API_BASE || queryApiBase || savedApiBase || '').replace(/\/$/, '');
+    const SMS_API_SEND_URL = (OTP_API_BASE || '') + '/api/sms/send-otp';
+    const SMS_API_VERIFY_URL = (OTP_API_BASE || '') + '/api/sms/verify-otp';
+
+    if (queryApiBase) {
+        safeSetStorage('otp_api_base', OTP_API_BASE);
+    }
+
+    const otpGate = document.getElementById('otpGate');
+    const appContent = document.getElementById('appContent');
+    const phoneInput = document.getElementById('phoneInput');
+    const otpInput = document.getElementById('otpInput');
+    const sendOtpBtn = document.getElementById('sendOtpBtn');
+    const verifyOtpBtn = document.getElementById('verifyOtpBtn');
+    const configApiLink = document.getElementById('configApiLink');
+    const resetSettingsLink = document.getElementById('resetSettingsLink');
+    const otpError = document.getElementById('otpError');
+    const otpSuccess = document.getElementById('otpSuccess');
+
+    let resendSeconds = 0;
+    let resendTimer = null;
+
+    function normalizePhone(phone) {
+        return phone.replace(/[\s-]/g, '');
+    }
+
+    function isValidPhone(phone) {
+        return /^\+?\d{8,15}$/.test(phone);
+    }
+
+    function isValidOtp(otp) {
+        return /^\d{4,6}$/.test(otp);
+    }
+
+    function showOtpError(message) {
+        otpError.textContent = message;
+        otpError.style.display = 'block';
+        otpSuccess.style.display = 'none';
+    }
+
+    function showOtpSuccess(message) {
+        otpSuccess.textContent = message;
+        otpSuccess.style.display = 'block';
+        otpError.style.display = 'none';
+    }
+
+    function clearOtpMessage() {
+        otpError.style.display = 'none';
+        otpSuccess.style.display = 'none';
+    }
+
+    function configureApiBase() {
+        const current = OTP_API_BASE || 'https://';
+        const input = window.prompt('請輸入 OTP 後端網址（例如 https://your-app.onrender.com）', current);
+        if (!input) return;
+
+        const normalized = input.trim().replace(/\/$/, '');
+        if (!/^https?:\/\//i.test(normalized)) {
+            showOtpError('網址格式不正確，請輸入 http:// 或 https:// 開頭');
+            return;
+        }
+
+        safeSetStorage('otp_api_base', normalized);
+        const url = new URL(window.location.href);
+        url.searchParams.set('api', normalized);
+        window.location.href = url.toString();
+    }
+
+    function resetPageSettings() {
+        const confirmed = window.confirm('確定要取消本頁已保存的設定嗎？此操作會清除驗證服務網址與驗證狀態。');
+        if (!confirmed) return;
+
+        safeRemoveStorage('otp_api_base');
+        safeRemoveSession('fpspay_verified_phone');
+
+        phoneInput.value = '';
+        otpInput.value = '';
+        clearOtpMessage();
+        appContent.style.display = 'none';
+        otpGate.style.display = 'block';
+
+        const cleanUrl = new URL(window.location.href);
+        cleanUrl.searchParams.delete('api');
+        window.location.href = cleanUrl.toString();
+    }
+
+    if (configApiLink) {
+        configApiLink.addEventListener('click', (event) => {
+            event.preventDefault();
+            configureApiBase();
+        });
+    }
+
+    if (resetSettingsLink) {
+        resetSettingsLink.addEventListener('click', (event) => {
+            event.preventDefault();
+            resetPageSettings();
+        });
+    }
+
+    function setSendButtonState() {
+        if (resendSeconds > 0) {
+            sendOtpBtn.disabled = true;
+            sendOtpBtn.textContent = '重發(' + resendSeconds + 's)';
+        } else {
+            sendOtpBtn.disabled = false;
+            sendOtpBtn.textContent = '獲取驗證碼';
+        }
+    }
+
+    function startResendCountdown(seconds) {
+        resendSeconds = seconds;
+        setSendButtonState();
+        if (resendTimer) {
+            clearInterval(resendTimer);
+        }
+        resendTimer = setInterval(() => {
+            resendSeconds -= 1;
+            if (resendSeconds <= 0) {
+                clearInterval(resendTimer);
+                resendTimer = null;
+                resendSeconds = 0;
+            }
+            setSendButtonState();
+        }, 1000);
+    }
+
+    async function sendOtp() {
+        clearOtpMessage();
+        const phone = normalizePhone(phoneInput.value.trim());
+        if (!OTP_API_BASE) {
+            showOtpError('尚未設定驗證服務網址，請先點「設定驗證服務網址」');
+            return;
+        }
+        if (!isValidPhone(phone)) {
+            showOtpError('請輸入正確手機號碼（8-15位數字，可含 + 國碼）');
+            return;
+        }
+
+        sendOtpBtn.disabled = true;
+        sendOtpBtn.textContent = '發送中...';
+        try {
+            const response = await fetch(SMS_API_SEND_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone: phone })
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || data.success === false) {
+                throw new Error((data.message || '驗證碼發送失敗') + '（API: ' + SMS_API_SEND_URL + '）');
+            }
+            showOtpSuccess(data.message || '驗證碼已發送，請查收 SMS');
+            startResendCountdown(60);
+        } catch (error) {
+            if (error && error.name === 'TypeError') {
+                showOtpError('無法連線到驗證服務，請檢查後端網址/CORS/服務是否啟動（API: ' + SMS_API_SEND_URL + '）');
+            } else {
+                showOtpError(error.message || '系統繁忙，請稍後再試');
+            }
+            resendSeconds = 0;
+            setSendButtonState();
+        }
+    }
+
+    async function verifyOtp() {
+        clearOtpMessage();
+        const phone = normalizePhone(phoneInput.value.trim());
+        const otp = otpInput.value.trim();
+
+        if (!OTP_API_BASE) {
+            showOtpError('尚未設定驗證服務網址，請先點「設定驗證服務網址」');
+            return;
+        }
+
+        if (!isValidPhone(phone)) {
+            showOtpError('請先輸入正確手機號碼');
+            return;
+        }
+        if (!isValidOtp(otp)) {
+            showOtpError('請輸入 4-6 位數字驗證碼');
+            return;
+        }
+
+        verifyOtpBtn.disabled = true;
+        verifyOtpBtn.textContent = '驗證中...';
+        try {
+            const response = await fetch(SMS_API_VERIFY_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone: phone, otp: otp })
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || data.success === false) {
+                throw new Error((data.message || '驗證碼錯誤或已失效') + '（API: ' + SMS_API_VERIFY_URL + '）');
+            }
+
+            showOtpSuccess('手機驗證成功，正在開啟付款頁...');
+            appContent.style.display = 'block';
+            otpGate.style.display = 'none';
+            safeSetSession('fpspay_verified_phone', phone);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        } catch (error) {
+            if (error && error.name === 'TypeError') {
+                showOtpError('無法連線到驗證服務，請檢查後端網址/CORS/服務是否啟動（API: ' + SMS_API_VERIFY_URL + '）');
+            } else {
+                showOtpError(error.message || '驗證失敗，請重試');
+            }
+        } finally {
+            verifyOtpBtn.disabled = false;
+            verifyOtpBtn.textContent = '確認驗證並進入付款頁';
+        }
+    }
+
+    sendOtpBtn.addEventListener('click', sendOtp);
+    verifyOtpBtn.addEventListener('click', verifyOtp);
+    otpInput.addEventListener('input', () => {
+        otpInput.value = otpInput.value.replace(/\D/g, '').slice(0, 6);
+    });
+    phoneInput.addEventListener('input', clearOtpMessage);
+    otpInput.addEventListener('input', clearOtpMessage);
+
+    const verifiedPhone = safeGetSession('fpspay_verified_phone');
+    if (verifiedPhone && isValidPhone(verifiedPhone)) {
+        appContent.style.display = 'block';
+        otpGate.style.display = 'none';
+    }
+
+    // 讀取多商品資訊並渲染
+    function getQueryParam(name) {
+        const url = new URL(window.location.href);
+        return url.searchParams.get(name);
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+        // 顯示主商品類型
+        const mainProduct = getQueryParam('mainProduct');
+        if (mainProduct) {
+            document.getElementById('mainProductTitle').textContent = '已選 ' + mainProduct;
+        }
+        const productsStr = getQueryParam('products');
+        let total = 0;
+        if (productsStr) {
+            try {
+                const products = JSON.parse(decodeURIComponent(productsStr));
+                const listDiv = document.getElementById('checkoutProductsList');
+                listDiv.innerHTML = '';
+                products.forEach(item => {
+                    const row = document.createElement('div');
+                    row.className = 'data-row';
+                    row.innerHTML = `<span class='label'>${item.name} × ${item.qty}</span><span class='value'>HK$${item.subtotal}</span>`;
+                    listDiv.appendChild(row);
+                    total += item.subtotal;
+                });
+                document.getElementById('checkoutTotal').textContent = 'HK$' + total;
+            } catch(e) {
+                document.getElementById('checkoutTotal').textContent = '資料錯誤';
+            }
+        }
+    });
+
+    const checkbox = document.getElementById('agreeCheck');
+    const termsForceCheck = document.getElementById('termsForceCheck');
+    const btn = document.getElementById('showPayBtn');
+    const fpsSection = document.getElementById('fpsSection');
+    const waBtn = document.getElementById('waBtn');
+
+    function syncPaymentButtonState() {
+        btn.disabled = !(checkbox.checked && termsForceCheck.checked);
+    }
+
+    checkbox.addEventListener('change', syncPaymentButtonState);
+    termsForceCheck.addEventListener('change', syncPaymentButtonState);
+
+    function syncOfflineButtonState() {
+        waBtn.classList.toggle('disabled', !termsForceCheck.checked);
+    }
+
+    btn.addEventListener('click', () => {
+        fpsSection.style.display = 'block';
+        waBtn.style.display = 'block';
+        syncOfflineButtonState();
+        btn.style.display = 'none';
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    });
+
+    termsForceCheck.addEventListener('change', syncOfflineButtonState);
+</script>
+
+</body>
+</html>
